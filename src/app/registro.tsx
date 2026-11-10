@@ -2,7 +2,7 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { API } from '../config';
-import { guardarMfa } from '../sesion';
+import { guardarNombre } from '../sesion';
 import { colores } from '../tema';
 
 export default function Register() {
@@ -37,7 +37,7 @@ export default function Register() {
         return;
       }
       if (respuesta.ok) {
-        guardarMfa({ mfaToken: datos.mfaToken, ...datos.mfaSetup });
+        guardarNombre(correo, nombre);
         setClaveRecuperacion(datos.recoveryKey);
       } else {
         setError(datos.error);
@@ -54,7 +54,7 @@ export default function Register() {
         <Text selectable style={styles.clave}>{claveRecuperacion}</Text>
         <Pressable
           style={styles.boton}
-          onPress={() => router.replace('/mfa')}
+          onPress={() => router.replace({ pathname: '/verificar', params: { correo } })}
         >
           <Text style={styles.textoBoton}>Ya lo guarde</Text>
         </Pressable>

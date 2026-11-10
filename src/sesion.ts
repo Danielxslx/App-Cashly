@@ -36,6 +36,36 @@ export const cargarRefreshGuardado = async () => {
   }
 };
 
+const claveDe = (prefijo: string, correo: string) =>
+  `${prefijo}_${correo.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '_')}`;
+
+export const guardarNombre = (correo: string, nombre: string) => {
+  if (nombre.trim() === '') {
+    return;
+  }
+  SecureStore.setItemAsync(claveDe('nombre', correo), nombre.trim()).catch(() => {});
+};
+
+export const obtenerNombre = async (correo: string) => {
+  try {
+    return (await SecureStore.getItemAsync(claveDe('nombre', correo))) ?? '';
+  } catch {
+    return '';
+  }
+};
+
+export const guardarCorreoActual = (correo: string) => {
+  SecureStore.setItemAsync('correoActual', correo.trim().toLowerCase()).catch(() => {});
+};
+
+export const obtenerCorreoActual = async () => {
+  try {
+    return (await SecureStore.getItemAsync('correoActual')) ?? '';
+  } catch {
+    return '';
+  }
+};
+
 export const guardarMfa = (datos: DatosMfa) => {
   mfaPendiente = datos;
 };
@@ -52,4 +82,5 @@ export const limpiarSesion = () => {
   mfaPendiente = null;
   mfaLogin = '';
   SecureStore.deleteItemAsync('refreshToken').catch(() => {});
+  SecureStore.deleteItemAsync('correoActual').catch(() => {});
 };

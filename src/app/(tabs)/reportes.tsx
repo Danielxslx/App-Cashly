@@ -29,6 +29,8 @@ export default function Reportes() {
     const [dias, setDias] = useState<any[]>([]);
     const [resumen, setResumen] = useState<any>(null);
     const [semanas, setSemanas] = useState<any[]>([]);
+    const [categorias, setCategorias] = useState<[string, number][]>([]);
+    const [totalMes, setTotalMes] = useState(0);
     const [cargando, setCargando] = useState(true);
     const [refrescando, setRefrescando] = useState(false);
     const [error, setError] = useState('');
@@ -51,10 +53,27 @@ export default function Reportes() {
             } else {
                 setError(datos.error ?? 'No se pudo cargar el reporte');
             }
+
             const respSemanas = await peticion('/reports/weekly?tz=America/Bogota&weeks=4');
             const datosSemanas = await respSemanas.json();
             if (respSemanas.ok) {
                 setSemanas(datosSemanas.weeks);
+            }
+
+            const inicioMes = new Date();
+            inicioMes.setDate(1);
+            inicioMes.setHours(0, 0, 0, 0);
+            const respResumen = await peticion(
+                `/transactions/summary?from=${encodeURIComponent(inicioMes.toISOString())}`
+            );
+            const datosResumen = await respResumen.json();
+            if (respResumen.ok) {
+                setTotalMes(datosResumen.total);
+                setCategorias(
+                    Object.entries(datosResumen.by_category as Record<string, number>).sort(
+                        (a, b) => b[1] - a[1]
+                    )
+                );
             }
         } catch {
             setError('No se pudo conectar con el servidor');
@@ -140,7 +159,7 @@ export default function Reportes() {
                             <Text style={styles.detalle}>{resumen.zero_days} días sin gastar</Text>
                         </View>
 
-                         <View style={styles.tarjeta}>
+                        <View style={styles.tarjeta}>
                             <Text style={styles.seccion}>Dónde más gastas</Text>
                             {resumen.top_merchants.length === 0 ? (
                                 <Text style={styles.detalle}>Aún no hay datos.</Text>
@@ -153,6 +172,36 @@ export default function Reportes() {
                                 ))
                             )}
                         </View>
+
+                        <View style={styles.tarjeta}>
+                            <Text style={styles.seccion}>Gasto por categoría (este mes)</Text>
+                            {categorias.length === 0 ? (
+                                <Text style={styles.detalle}>Aún no hay gastos este mes.</Text>
+                            ) : (
+                                categorias.map(([cat, valor]) => (
+                                    <View key={cat} style={styles.catFila}>
+                                        <View style={styles.catEncabezado}>
+                                            <Text style={styles.comercio}>
+                                                {cat === 'sin_categoria' ? 'Sin categoría' : cat}
+                                            </Text>
+                                            <Text style={styles.comercio}>{dinero(valor)}</Text>
+                                        </View>
+                                        <View style={styles.catFondo}>
+                                            <View
+                                                style={[
+                                                    styles.catBarra,
+                                                    { width: `${Math.max((valor / totalMes) * 100, 3)}%` },
+                                                ]}
+                                            />
+                                        </View>
+                                        <Text style={styles.detalle}>
+                                            {Math.round((valor / totalMes) * 100)}% del total
+                                        </Text>
+                                    </View>
+                                ))
+                            )}
+                        </View>
+
                         <View style={styles.tarjeta}>
                             <Text style={styles.seccion}>Por semana</Text>
                             {[...semanas].reverse().map((s, i) => (
@@ -172,7 +221,7 @@ export default function Reportes() {
                                 </View>
                             ))}
                         </View>
-                    </>       
+                    </>
                 ) : null}
                 <View style={{ height: 40 }} />
             </ScrollView>
@@ -295,5 +344,24 @@ const styles = StyleSheet.create({
     },
     derecha: {
         alignItems: 'flex-end',
+    },
+    catFila: {
+        marginBottom: 14,
+    },
+    catEncabezado: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    catFondo: {
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: colores.fondo,
+        marginVertical: 6,
+        overflow: 'hidden',
+    },
+    catBarra: {
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: colores.acento,
     },
 });

@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { API } from '../config';
 import {
   cargarRefreshGuardado,
+  guardarCorreoActual,
   guardarMfa,
   guardarMfaLogin,
   guardarRefresh,
@@ -67,10 +68,15 @@ export default function Login() {
         );
         return;
       }
+      if (respuesta.status === 403 && datos.emailVerificationRequired) {
+        router.replace({ pathname: '/verificar', params: { correo } });
+        return;
+      }
       if (!respuesta.ok) {
         setError(datos.error);
         return;
       }
+      guardarCorreoActual(correo);
       if (datos.mfaRequired) {
         guardarMfaLogin(datos.mfaToken);
         router.replace('/codigo');
@@ -113,6 +119,7 @@ export default function Login() {
       </Pressable>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Link href="/registro" style={styles.enlace}>¿No tienes cuenta? Registrate</Link>
+      <Link href="/recuperar" style={styles.enlace}>¿Olvidaste tu contraseña?</Link>
     </View>
   );
 }

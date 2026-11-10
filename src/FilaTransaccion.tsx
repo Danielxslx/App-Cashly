@@ -4,13 +4,15 @@ import { colores } from './tema';
 export default function FilaTransaccion({
     t,
     onLongPress,
+    onPress,
 }: {
     t: any;
     onLongPress?: () => void;
+    onPress?: () => void;
 }) {
     const declinada = t.status === 'declined';
     return (
-        <Pressable style={styles.fila} onLongPress={onLongPress}>
+        <Pressable style={styles.fila} onPress={onPress} onLongPress={onLongPress}>
             <View style={styles.circulo}>
                 <Text style={styles.emoji}>{t.type === 'cash' ? '💵' : '💳'}</Text>
             </View>
@@ -57,7 +59,7 @@ const styles = StyleSheet.create({
     },
     detalle: {
         fontSize: 12,
-        color: colores.texto,
+        color: colores.texto2,
         marginTop: 2,
     },
     monto: {
