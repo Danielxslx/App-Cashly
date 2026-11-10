@@ -1,176 +1,223 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { API } from '../config';
-import { guardarMfa } from '../sesion';
+import { guardarCorreoActual, guardarMfa } from '../sesion';
 import { colores } from '../tema';
+import { Boton, Campo, PantallaAuth } from '../ui';
 
 export default function Recuperar() {
-  const [correo, setCorreo] = useState('');
-  const [llave, setLlave] = useState('');
-  const [clave, setClave] = useState('');
-  const [claveNueva, setClaveNueva] = useState('');
-  const [error, setError] = useState('');
-  const router = useRouter();
+    const router = useRouter();
+    const [correo, setCorreo] = useState('');
+    const [llave, setLlave] = useState('');
+    const [nueva, setNueva] = useState('');
+    const [error, setError] = useState('');
+    const [enviando, setEnviando] = useState(false);
+    const [claveNueva, setClaveNueva] = useState('');
 
-  const recuperar = async () => {
-    if (!/^\S+@\S+\.\S+$/.test(correo.trim())) {
-      setError('Escribe un correo válido');
-      return;
-    }
-    if (llave.trim() === '') {
-      setError('Escribe tu clave de recuperación');
-      return;
-    }
-    if (clave.length < 10) {
-      setError('La contraseña nueva debe tener mínimo 10 caracteres');
-      return;
-    }
-    setError('');
-    try {
-      const respuesta = await fetch(`${API}/auth/recover`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: correo.trim(),
-          recoveryKey: llave.trim(),
-          newPassword: clave,
-        }),
-      });
-      const texto = await respuesta.text();
-      let datos: any = {};
-      try {
-        datos = JSON.parse(texto);
-      } catch {
-        setError('El servidor respondió algo inesperado');
-        return;
-      }
-      if (respuesta.ok) {
-        guardarMfa({ mfaToken: datos.mfaToken, ...datos.mfaSetup });
-        setClaveNueva(datos.recoveryKey);
-      } else {
-        setError(datos.error ?? 'No se pudo recuperar la cuenta');
-      }
-    } catch {
-      setError('No se pudo conectar con el servidor');
-    }
-  };
+    const recuperar = async () => {
+        setError('');
+        if (!/^\S+@\S+\.\S+$/.test(correo)) {
+            setError('Escribe un correo válido');
+            return;
+        }
+        if (llave.trim() === '') {
+            setError('Escribe tu clave de recuperación');
+            return;
+        }
+        if (nueva.length < 10) {
+            setError('La contraseña nueva debe tener mínimo 10 caracteres');
+            return;
+        }
+        setEnviando(true);
+        try {
+            const respuesta = await fetch(`${API}/auth/recover`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: correo,
+                    recoveryKey: llave.trim(),
+                    newPassword: nueva,
+                }),
+            });
+            const texto = await respuesta.text();
+            let datos: any = {};
+            try {
+                datos = JSON.parse(texto);
+            } catch {
+                setError(
+                    respuesta.status === 429
+                        ? 'Demasiados intentos, espera unos minutos'
+                        : 'El servidor respondió algo inesperado'
+                );
+                return;
+            }
+            if (!respuesta.ok) {
+                setError(datos.error ?? 'No se pudo recuperar la cuenta');
+                return;
+            }
+            guardarCorreoActual(correo);
+            guardarMfa({ mfaToken: datos.mfaToken, ...datos.mfaSetup });
+            setClaveNueva(datos.recoveryKey);
+        } catch {
+            setError('No se pudo conectar con el servidor');
+        } finally {
+            setEnviando(false);
+        }
+    };
 
-  if (claveNueva) {
+    const compartirClave = () => {
+        Share.share({ message: `Mi nueva clave de recuperación de Cashly: ${claveNueva}` });
+    };
+
+    if (claveNueva) {
+        return (
+            <PantallaAuth>
+                <View style={styles.iconoLlave}>
+                    <Ionicons name="key-outline" size={34} color="#B45309" />
+                </View>
+                <Text style={styles.titulo}>Esta es tu nueva clave</Text>
+                <Text style={styles.subtitulo}>
+                    Guárdala: la anterior ya no sirve y solo se muestra una vez. En el siguiente paso
+                    vas a configurar de nuevo tu Authenticator.
+                </Text>
+                <View style={styles.cajaClave}>
+                    <Text selectable style={styles.clave}>
+                        {claveNueva}
+                    </Text>
+                </View>
+                <Pressable style={styles.compartir} onPress={compartirClave}>
+                    <Ionicons name="share-outline" size={18} color={colores.acento} />
+                    <Text style={styles.compartirTexto}>Guardar o compartir</Text>
+                </Pressable>
+                <Boton texto="Continuar" onPress={() => router.replace('/mfa')} />
+            </PantallaAuth>
+        );
+    }
+
     return (
-      <View style={styles.contenedor}>
-        <Text style={styles.titulo}>Guarda tu nueva clave</Text>
-        <Text style={styles.texto}>
-          Tu clave anterior ya no sirve. Esta se muestra una sola vez. Además, tu Authenticator
-          anterior dejó de funcionar: en el siguiente paso escanearás un QR nuevo.
-        </Text>
-        <Text selectable style={styles.clave}>{claveNueva}</Text>
-        <Pressable style={styles.boton} onPress={() => router.replace('/mfa')}>
-          <Text style={styles.textoBoton}>Ya la guardé</Text>
-        </Pressable>
-      </View>
-    );
-  }
+        <PantallaAuth>
+            <View style={styles.icono}>
+                <Ionicons name="shield-checkmark-outline" size={34} color={colores.acento} />
+            </View>
+            <Text style={styles.titulo}>Recuperar cuenta</Text>
+            <Text style={styles.subtitulo}>
+                Usa la clave de recuperación que guardaste cuando te registraste.
+            </Text>
 
-  return (
-    <ScrollView
-      style={{ backgroundColor: colores.fondo }}
-      contentContainerStyle={styles.contenedor}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={styles.titulo}>Recuperar cuenta</Text>
-      <Text style={styles.texto}>
-        Usa la clave de recuperación que guardaste cuando te registraste.
-      </Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Correo electrónico"
-        placeholderTextColor={colores.placeholder}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={correo}
-        onChangeText={setCorreo}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Clave de recuperación"
-        placeholderTextColor={colores.placeholder}
-        autoCapitalize="none"
-        autoCorrect={false}
-        value={llave}
-        onChangeText={setLlave}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña nueva (mín. 10 caracteres)"
-        placeholderTextColor={colores.placeholder}
-        secureTextEntry
-        value={clave}
-        onChangeText={setClave}
-      />
-      <Pressable style={styles.boton} onPress={recuperar}>
-        <Text style={styles.textoBoton}>Recuperar cuenta</Text>
-      </Pressable>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Pressable onPress={() => router.replace('/')}>
-        <Text style={styles.enlace}>Volver a iniciar sesión</Text>
-      </Pressable>
-    </ScrollView>
-  );
+            <Campo
+                icono="mail-outline"
+                placeholder="Correo electrónico"
+                autoCapitalize="none"
+                keyboardType="email-address"
+                value={correo}
+                onChangeText={setCorreo}
+            />
+            <Campo
+                icono="key-outline"
+                placeholder="Clave de recuperación"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={llave}
+                onChangeText={setLlave}
+            />
+            <Campo
+                icono="lock-closed-outline"
+                placeholder="Contraseña nueva (mínimo 10 caracteres)"
+                clave
+                autoCapitalize="none"
+                value={nueva}
+                onChangeText={setNueva}
+            />
+
+            {error ? <Text style={styles.error}>{error}</Text> : null}
+
+            <View style={{ height: 8 }} />
+            <Boton texto="Recuperar cuenta" onPress={recuperar} cargando={enviando} />
+
+            <Pressable style={styles.volver} onPress={() => router.replace('/')}>
+                <Text style={styles.volverTexto}>Volver a iniciar sesión</Text>
+            </Pressable>
+        </PantallaAuth>
+    );
 }
 
 const styles = StyleSheet.create({
-  contenedor: {
-    padding: 24,
-    paddingTop: 140,
-    backgroundColor: colores.fondo,
-  },
-  titulo: {
-    fontSize: 30,
-    color: colores.texto,
-    textAlign: 'center',
-  },
-  texto: {
-    fontSize: 15,
-    color: colores.texto2,
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  input: {
-    backgroundColor: colores.tarjeta,
-    color: colores.texto,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colores.bordes,
-    borderRadius: 10,
-    marginBottom: 14,
-  },
-  boton: {
-    backgroundColor: colores.acento,
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  textoBoton: {
-    color: colores.texto,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  enlace: {
-    color: colores.acento2,
-    textAlign: 'center',
-    marginTop: 20,
-  },
-  error: {
-    color: colores.gasto,
-    textAlign: 'center',
-    marginTop: 12,
-  },
-  clave: {
-    color: colores.texto,
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
+    icono: {
+        width: 72,
+        height: 72,
+        borderRadius: 24,
+        backgroundColor: '#E8ECFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
+        marginBottom: 20,
+    },
+    iconoLlave: {
+        width: 72,
+        height: 72,
+        borderRadius: 24,
+        backgroundColor: '#FEF3C7',
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
+        marginBottom: 20,
+    },
+    titulo: {
+        fontSize: 28,
+        color: colores.texto,
+        fontWeight: '800',
+        letterSpacing: -0.7,
+        textAlign: 'center',
+    },
+    subtitulo: {
+        fontSize: 15,
+        color: colores.texto2,
+        textAlign: 'center',
+        marginTop: 8,
+        marginBottom: 28,
+        lineHeight: 22,
+    },
+    error: {
+        color: colores.gasto,
+        textAlign: 'center',
+        marginTop: 4,
+    },
+    volver: {
+        alignItems: 'center',
+        marginTop: 22,
+    },
+    volverTexto: {
+        color: colores.acento,
+        fontWeight: '700',
+        fontSize: 14.5,
+    },
+    cajaClave: {
+        backgroundColor: colores.tarjeta,
+        borderWidth: 1.5,
+        borderColor: colores.bordes,
+        borderRadius: 16,
+        padding: 18,
+        marginBottom: 14,
+    },
+    clave: {
+        color: colores.texto,
+        fontSize: 15,
+        fontWeight: '700',
+        textAlign: 'center',
+        lineHeight: 24,
+    },
+    compartir: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginBottom: 22,
+    },
+    compartirTexto: {
+        color: colores.acento,
+        fontWeight: '700',
+        fontSize: 14,
+    },
 });

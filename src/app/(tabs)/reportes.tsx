@@ -1,8 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { peticion } from '../../api';
-import { colores } from '../../tema';
+import { categoriaDe, colores } from '../../tema';
 
 const NOMBRES_DIA = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
@@ -22,7 +23,7 @@ const textoCambio = (pct: number | null) => {
 
 const colorCambio = (pct: number | null) => {
     if (pct === null || pct === 0) return colores.texto2;
-    return pct > 0 ? colores.gasto : '#22C55E';
+    return pct > 0 ? colores.gasto : colores.ok;
 };
 
 export default function Reportes() {
@@ -95,127 +96,167 @@ export default function Reportes() {
     );
 
     const maximo = Math.max(...dias.map((d) => d.total), 1);
+    const divisor = totalMes > 0 ? totalMes : 1;
 
     return (
-        <View style={styles.contenedor}>
+        <View style={s.contenedor}>
             <ScrollView
+                showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl
                         refreshing={refrescando}
                         onRefresh={refrescar}
-                        tintColor={colores.texto}
+                        tintColor={colores.acento}
                     />
                 }
             >
-                <View style={styles.cabecera}>
-                    <Text style={styles.titulo}>Reportes</Text>
-                    <Text style={styles.subtituloCab}>Tus últimos 7 días</Text>
+                <View style={s.cabecera}>
+                    <Text style={s.titulo}>Reportes</Text>
+                    <Text style={s.subtitulo}>Tus últimos 7 días</Text>
                 </View>
 
-                {error ? <Text style={styles.error}>{error}</Text> : null}
+                {error ? <Text style={s.error}>{error}</Text> : null}
 
                 {cargando ? (
-                    <ActivityIndicator color={colores.acento2} style={styles.cargando} />
+                    <ActivityIndicator color={colores.acento} style={s.cargando} />
                 ) : resumen ? (
                     <>
-                        <View style={styles.tarjeta}>
-                            <Text style={styles.seccion}>Gasto por día</Text>
-                            <View style={styles.grafico}>
-                                {dias.map((d) => (
-                                    <View key={d.date} style={styles.columna}>
-                                        <Text style={styles.valorBarra}>
-                                            {d.total > 0 ? Math.round(d.total / 1000) + 'k' : ''}
-                                        </Text>
-                                        <View
-                                            style={[
-                                                styles.barra,
-                                                { height: Math.max((d.total / maximo) * 120, 4) },
-                                            ]}
-                                        />
-                                        <Text style={styles.letra}>{letraDia(d.date)}</Text>
-                                    </View>
-                                ))}
+                        <View style={s.tarjeta}>
+                            <Text style={s.seccion}>Gasto por día</Text>
+                            <View style={s.grafico}>
+                                {dias.map((d) => {
+                                    const esMax = d.total > 0 && d.total === maximo;
+                                    return (
+                                        <View key={d.date} style={s.columna}>
+                                            <Text style={[s.valorBarra, esMax && { color: colores.acento, fontWeight: '800' }]}>
+                                                {d.total > 0 ? Math.round(d.total / 1000) + 'k' : ''}
+                                            </Text>
+                                            <View
+                                                style={[
+                                                    s.barra,
+                                                    {
+                                                        height: Math.max((d.total / maximo) * 120, 6),
+                                                        backgroundColor: esMax ? colores.acento : '#D5DCFF',
+                                                    },
+                                                ]}
+                                            />
+                                            <Text style={[s.letra, esMax && { color: colores.texto, fontWeight: '800' }]}>
+                                                {letraDia(d.date)}
+                                            </Text>
+                                        </View>
+                                    );
+                                })}
                             </View>
                         </View>
 
-                        <View style={styles.fila2}>
-                            <View style={styles.mini}>
-                                <Text style={styles.miniEtiqueta}>Total</Text>
-                                <Text style={styles.miniValor}>{dinero(resumen.total)}</Text>
+                        <View style={s.fila2}>
+                            <View style={s.mini}>
+                                <View style={[s.miniIcono, { backgroundColor: '#E8ECFF' }]}>
+                                    <Ionicons name="wallet-outline" size={18} color={colores.acento} />
+                                </View>
+                                <Text style={s.miniEtiqueta}>Total</Text>
+                                <Text style={s.miniValor}>{dinero(resumen.total)}</Text>
                             </View>
-                            <View style={styles.mini}>
-                                <Text style={styles.miniEtiqueta}>Promedio diario</Text>
-                                <Text style={styles.miniValor}>{dinero(resumen.avg_per_day)}</Text>
+                            <View style={s.mini}>
+                                <View style={[s.miniIcono, { backgroundColor: '#E0F7FB' }]}>
+                                    <Ionicons name="trending-up-outline" size={18} color="#0891B2" />
+                                </View>
+                                <Text style={s.miniEtiqueta}>Promedio diario</Text>
+                                <Text style={s.miniValor}>{dinero(resumen.avg_per_day)}</Text>
                             </View>
                         </View>
 
-                        <View style={styles.tarjeta}>
-                            <Text style={styles.seccion}>Día que más gastaste</Text>
-                            <Text style={styles.textoGrande}>
+                        <View style={s.tarjeta}>
+                            <Text style={s.seccion}>Día que más gastaste</Text>
+                            <Text style={s.textoGrande}>
                                 {resumen.max_day.total > 0
                                     ? `${resumen.max_day.date} · ${dinero(resumen.max_day.total)}`
                                     : 'Sin gastos esta semana'}
                             </Text>
-                            <Text style={styles.detalle}>{resumen.zero_days} días sin gastar</Text>
+                            <Text style={s.detalle}>{resumen.zero_days} días sin gastar</Text>
                         </View>
 
-                        <View style={styles.tarjeta}>
-                            <Text style={styles.seccion}>Dónde más gastas</Text>
+                        <View style={s.tarjeta}>
+                            <Text style={s.seccion}>Dónde más gastas</Text>
                             {resumen.top_merchants.length === 0 ? (
-                                <Text style={styles.detalle}>Aún no hay datos.</Text>
+                                <Text style={s.detalle}>Aún no hay datos.</Text>
                             ) : (
-                                resumen.top_merchants.map((c: any) => (
-                                    <View key={c.merchant} style={styles.filaComercio}>
-                                        <Text style={styles.comercio}>{c.merchant}</Text>
-                                        <Text style={styles.comercio}>{dinero(c.total)}</Text>
+                                resumen.top_merchants.map((c: any, i: number) => (
+                                    <View
+                                        key={c.merchant}
+                                        style={[s.filaComercio, i > 0 && s.filaBorde]}
+                                    >
+                                        <View style={s.puesto}>
+                                            <Text style={s.puestoTexto}>{i + 1}</Text>
+                                        </View>
+                                        <Text style={[s.comercio, { flex: 1 }]} numberOfLines={1}>
+                                            {c.merchant}
+                                        </Text>
+                                        <Text style={s.monto}>{dinero(c.total)}</Text>
                                     </View>
                                 ))
                             )}
                         </View>
 
-                        <View style={styles.tarjeta}>
-                            <Text style={styles.seccion}>Gasto por categoría (este mes)</Text>
+                        <View style={s.tarjeta}>
+                            <Text style={s.seccion}>Gasto por categoría (este mes)</Text>
                             {categorias.length === 0 ? (
-                                <Text style={styles.detalle}>Aún no hay gastos este mes.</Text>
+                                <Text style={s.detalle}>Aún no hay gastos este mes.</Text>
                             ) : (
-                                categorias.map(([cat, valor]) => (
-                                    <View key={cat} style={styles.catFila}>
-                                        <View style={styles.catEncabezado}>
-                                            <Text style={styles.comercio}>
-                                                {cat === 'sin_categoria' ? 'Sin categoría' : cat}
-                                            </Text>
-                                            <Text style={styles.comercio}>{dinero(valor)}</Text>
+                                categorias.map(([cat, valor]) => {
+                                    const info = categoriaDe(cat === 'sin_categoria' ? undefined : cat);
+                                    const pct = (valor / divisor) * 100;
+                                    return (
+                                        <View key={cat} style={s.catFila}>
+                                            <View style={s.catEncabezado}>
+                                                <View style={[s.catIcono, { backgroundColor: info.fondo }]}>
+                                                    <Ionicons name={info.icono as any} size={16} color={info.color} />
+                                                </View>
+                                                <Text style={[s.comercio, { flex: 1 }]}>
+                                                    {cat === 'sin_categoria' ? 'Sin categoría' : cat}
+                                                </Text>
+                                                <Text style={s.monto}>{dinero(valor)}</Text>
+                                            </View>
+                                            <View style={s.catFondo}>
+                                                <View
+                                                    style={[
+                                                        s.catBarra,
+                                                        {
+                                                            width: `${Math.min(Math.max(pct, 3), 100)}%`,
+                                                            backgroundColor: info.color,
+                                                        },
+                                                    ]}
+                                                />
+                                            </View>
+                                            <Text style={s.detalle}>{Math.round(pct)}% del total</Text>
                                         </View>
-                                        <View style={styles.catFondo}>
-                                            <View
-                                                style={[
-                                                    styles.catBarra,
-                                                    { width: `${Math.max((valor / totalMes) * 100, 3)}%` },
-                                                ]}
-                                            />
-                                        </View>
-                                        <Text style={styles.detalle}>
-                                            {Math.round((valor / totalMes) * 100)}% del total
-                                        </Text>
-                                    </View>
-                                ))
+                                    );
+                                })
                             )}
                         </View>
 
-                        <View style={styles.tarjeta}>
-                            <Text style={styles.seccion}>Por semana</Text>
-                            {[...semanas].reverse().map((s, i) => (
-                                <View key={s.start} style={styles.filaComercio}>
-                                    <View>
-                                        <Text style={styles.comercio}>
-                                            {i === 0 ? 'Esta semana' : `${s.start} a ${s.end}`}
+                        <View style={s.tarjeta}>
+                            <Text style={s.seccion}>Por semana</Text>
+                            {[...semanas].reverse().map((sem, i) => (
+                                <View
+                                    key={sem.start}
+                                    style={[s.filaComercio, i > 0 && s.filaBorde]}
+                                >
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={s.comercio}>
+                                            {i === 0 ? 'Esta semana' : `${sem.start} a ${sem.end}`}
                                         </Text>
-                                        <Text style={styles.detalle}>{s.count} movimientos</Text>
+                                        <Text style={s.detalle}>{sem.count} movimientos</Text>
                                     </View>
-                                    <View style={styles.derecha}>
-                                        <Text style={styles.comercio}>{dinero(s.total)}</Text>
-                                        <Text style={[styles.detalle, { color: colorCambio(s.change_pct) }]}>
-                                            {textoCambio(s.change_pct)}
+                                    <View style={s.derecha}>
+                                        <Text style={s.monto}>{dinero(sem.total)}</Text>
+                                        <Text
+                                            style={[
+                                                s.detalle,
+                                                { color: colorCambio(sem.change_pct), fontWeight: '700' },
+                                            ]}
+                                        >
+                                            {textoCambio(sem.change_pct)}
                                         </Text>
                                     </View>
                                 </View>
@@ -229,139 +270,85 @@ export default function Reportes() {
     );
 }
 
-const styles = StyleSheet.create({
-    contenedor: {
-        flex: 1,
-        backgroundColor: colores.fondo,
-    },
-    cabecera: {
-        backgroundColor: colores.acento2,
-        paddingTop: 70,
-        paddingBottom: 28,
-        paddingHorizontal: 24,
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
-        marginBottom: 20,
-    },
-    titulo: {
-        fontSize: 28,
-        color: colores.textoGastos,
-        fontWeight: 'bold',
-    },
-    subtituloCab: {
-        fontSize: 14,
-        color: colores.textoGastos,
-        opacity: 0.8,
-        marginTop: 4,
-    },
+const s = StyleSheet.create({
+    contenedor: { flex: 1, backgroundColor: colores.fondo },
+    cabecera: { paddingTop: 64, paddingHorizontal: 20, paddingBottom: 20 },
+    titulo: { fontSize: 30, fontWeight: '800', color: colores.texto, letterSpacing: -0.8 },
+    subtitulo: { fontSize: 14.5, color: colores.texto2, marginTop: 4 },
+
     tarjeta: {
         backgroundColor: colores.tarjeta,
-        borderRadius: 20,
+        borderRadius: 22,
         padding: 18,
         marginHorizontal: 20,
         marginBottom: 14,
+        borderWidth: 1,
+        borderColor: colores.bordes,
     },
-    seccion: {
-        fontSize: 16,
-        color: colores.texto,
-        fontWeight: 'bold',
-        marginBottom: 12,
-    },
+    seccion: { fontSize: 16, color: colores.texto, fontWeight: '800', marginBottom: 14 },
+
     grafico: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-end',
         height: 170,
     },
-    columna: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-    },
-    barra: {
-        width: 22,
-        borderRadius: 6,
-        backgroundColor: colores.acento,
-    },
-    valorBarra: {
-        fontSize: 10,
-        color: colores.texto2,
-        marginBottom: 4,
-    },
-    letra: {
-        fontSize: 12,
-        color: colores.texto2,
-        marginTop: 6,
-    },
-    fila2: {
-        flexDirection: 'row',
-        gap: 14,
-        marginHorizontal: 20,
-        marginBottom: 14,
-    },
+    columna: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+    barra: { width: 26, borderRadius: 8 },
+    valorBarra: { fontSize: 10.5, color: colores.texto2, marginBottom: 4, fontWeight: '600' },
+    letra: { fontSize: 12, color: colores.texto2, marginTop: 8, fontWeight: '600' },
+
+    fila2: { flexDirection: 'row', gap: 14, marginHorizontal: 20, marginBottom: 14 },
     mini: {
         flex: 1,
         backgroundColor: colores.tarjeta,
-        borderRadius: 20,
+        borderRadius: 22,
         padding: 18,
+        borderWidth: 1,
+        borderColor: colores.bordes,
     },
-    miniEtiqueta: {
-        fontSize: 12,
-        color: colores.texto2,
-    },
-    miniValor: {
-        fontSize: 18,
-        color: colores.texto,
-        fontWeight: 'bold',
-        marginTop: 4,
-    },
-    textoGrande: {
-        fontSize: 18,
-        color: colores.texto,
-        fontWeight: 'bold',
-    },
-    detalle: {
-        fontSize: 12,
-        color: colores.texto2,
-        marginTop: 4,
-    },
-    filaComercio: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: 8,
-    },
-    comercio: {
-        fontSize: 15,
-        color: colores.texto,
-    },
-    cargando: {
-        paddingVertical: 24,
-    },
-    error: {
-        color: colores.gasto,
-        textAlign: 'center',
+    miniIcono: {
+        width: 34,
+        height: 34,
+        borderRadius: 11,
+        alignItems: 'center',
+        justifyContent: 'center',
         marginBottom: 12,
     },
-    derecha: {
-        alignItems: 'flex-end',
+    miniEtiqueta: { fontSize: 12.5, color: colores.texto2, fontWeight: '600' },
+    miniValor: { fontSize: 19, color: colores.texto, fontWeight: '800', marginTop: 4, letterSpacing: -0.4 },
+
+    textoGrande: { fontSize: 18, color: colores.texto, fontWeight: '800' },
+    detalle: { fontSize: 12.5, color: colores.texto2, marginTop: 4 },
+
+    filaComercio: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
+    filaBorde: { borderTopWidth: 1, borderTopColor: colores.bordes },
+    puesto: {
+        width: 26,
+        height: 26,
+        borderRadius: 9,
+        backgroundColor: '#E8ECFF',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    catFila: {
-        marginBottom: 14,
-    },
-    catEncabezado: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
+    puestoTexto: { fontSize: 12.5, fontWeight: '800', color: colores.acento },
+    comercio: { fontSize: 15, color: colores.texto, fontWeight: '600' },
+    monto: { fontSize: 15, color: colores.texto, fontWeight: '800' },
+    derecha: { alignItems: 'flex-end' },
+
+    catFila: { marginBottom: 16 },
+    catEncabezado: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    catIcono: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
     catFondo: {
         height: 8,
         borderRadius: 4,
-        backgroundColor: colores.fondo,
-        marginVertical: 6,
+        backgroundColor: '#EEF0F6',
+        marginTop: 10,
+        marginBottom: 2,
         overflow: 'hidden',
     },
-    catBarra: {
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: colores.acento,
-    },
+    catBarra: { height: 8, borderRadius: 4 },
+
+    cargando: { paddingVertical: 40 },
+    error: { color: colores.gasto, textAlign: 'center', marginBottom: 12 },
 });

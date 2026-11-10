@@ -1,22 +1,27 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Linking, StyleSheet, Text, TextInput, View } from 'react-native';
 import { API } from '../config';
-import { guardarRefresh, guardarToken, obtenerMfa, } from '../sesion';
+import { guardarRefresh, guardarToken, obtenerMfa } from '../sesion';
 import { colores } from '../tema';
+import { Boton, PantallaAuth } from '../ui';
 
 export default function Mfa() {
     const router = useRouter();
     const mfa = obtenerMfa();
     const [codigo, setCodigo] = useState('');
     const [error, setError] = useState('');
+    const [enviando, setEnviando] = useState(false);
 
     const confirmar = async () => {
         if (!mfa) return;
+        setError('');
         if (codigo.replace(/\s/g, '').length !== 6) {
             setError('El código debe tener 6 dígitos');
             return;
         }
+        setEnviando(true);
         try {
             const respuesta = await fetch(`${API}/auth/mfa/setup/confirm`, {
                 method: 'POST',
@@ -40,114 +45,137 @@ export default function Mfa() {
             }
         } catch {
             setError('No se pudo conectar con el servidor');
+        } finally {
+            setEnviando(false);
         }
     };
 
     if (!mfa) {
         return (
-            <View style={styles.contenedor}>
+            <PantallaAuth>
                 <Text style={styles.titulo}>No hay un registro pendiente</Text>
-                <Pressable style={styles.boton} onPress={() => router.replace('/')}>
-                    <Text style={styles.textoBoton}>Ir al login</Text>
-                </Pressable>
-            </View>
+                <View style={{ height: 24 }} />
+                <Boton texto="Ir al login" onPress={() => router.replace('/')} />
+            </PantallaAuth>
         );
     }
 
     return (
-        <ScrollView style={styles.pantalla} contentContainerStyle={styles.contenedor}>
+        <PantallaAuth>
+            <View style={styles.icono}>
+                <Ionicons name="shield-checkmark-outline" size={34} color={colores.acento} />
+            </View>
             <Text style={styles.titulo}>Verificación en dos pasos</Text>
-            <Text style={styles.texto}>
-                Agrega tu cuenta en Microsoft Authenticator y escribe el código de 6 dígitos que te muestra.
+            <Text style={styles.subtitulo}>
+                Agrega tu cuenta en Microsoft Authenticator y escribe el código de 6 dígitos que te
+                muestra.
             </Text>
 
-            <Pressable style={styles.boton} onPress={() => Linking.openURL(mfa.otpauthUrl)}>
-                <Text style={styles.textoBoton}>Abrir Authenticator</Text>
-            </Pressable>
+            <Boton texto="Abrir Authenticator" onPress={() => Linking.openURL(mfa.otpauthUrl)} />
 
-            <Text style={styles.texto}>Si no abre, agrégala a mano con esta clave:</Text>
-            <Text selectable style={styles.clave}>{mfa.secret}</Text>
+            <Text style={styles.ayuda}>Si no abre, agrégala a mano con esta clave:</Text>
+            <View style={styles.cajaClave}>
+                <Text selectable style={styles.clave}>
+                    {mfa.secret}
+                </Text>
+            </View>
 
-            <Image source={{ uri: mfa.qrCode }} style={styles.qr} />
+            <View style={styles.qrCaja}>
+                <Image source={{ uri: mfa.qrCode }} style={styles.qr} />
+            </View>
 
             <TextInput
-                style={styles.input}
+                style={styles.codigo}
                 placeholder="000000"
-                placeholderTextColor={colores.placeholder}
-                keyboardType="numeric"
+                placeholderTextColor="#C5CAD6"
+                keyboardType="number-pad"
                 maxLength={7}
                 value={codigo}
                 onChangeText={setCodigo}
             />
             {error ? <Text style={styles.error}>{error}</Text> : null}
-            <Pressable style={styles.boton} onPress={confirmar}>
-                <Text style={styles.textoBoton}>Confirmar</Text>
-            </Pressable>
-        </ScrollView>
+            <View style={{ height: 8 }} />
+            <Boton texto="Confirmar" onPress={confirmar} cargando={enviando} />
+        </PantallaAuth>
     );
 }
 
 const styles = StyleSheet.create({
-    pantalla: {
-        flex: 1,
-        backgroundColor: colores.fondo,
-    },
-    contenedor: {
-        padding: 24,
-        paddingTop: 80,
-        backgroundColor: colores.fondo,
+    icono: {
+        width: 72,
+        height: 72,
+        borderRadius: 24,
+        backgroundColor: '#E8ECFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
+        marginBottom: 20,
     },
     titulo: {
-        fontSize: 28,
+        fontSize: 26,
         color: colores.texto,
+        fontWeight: '800',
+        letterSpacing: -0.6,
         textAlign: 'center',
-        marginBottom: 12,
     },
-    texto: {
+    subtitulo: {
         fontSize: 15,
         color: colores.texto2,
         textAlign: 'center',
-        marginBottom: 16,
+        marginTop: 8,
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    ayuda: {
+        fontSize: 13.5,
+        color: colores.texto2,
+        textAlign: 'center',
+        marginTop: 22,
+        marginBottom: 10,
+    },
+    cajaClave: {
+        backgroundColor: colores.tarjeta,
+        borderWidth: 1.5,
+        borderColor: colores.bordes,
+        borderRadius: 14,
+        padding: 14,
     },
     clave: {
         color: colores.texto,
-        fontSize: 16,
+        fontSize: 14,
+        fontWeight: '700',
         textAlign: 'center',
-        marginBottom: 8,
+        letterSpacing: 1,
+    },
+    qrCaja: {
+        alignSelf: 'center',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        padding: 14,
+        marginVertical: 22,
+        borderWidth: 1,
+        borderColor: colores.bordes,
     },
     qr: {
         width: 200,
         height: 200,
-        alignSelf: 'center',
-        marginVertical: 20,
     },
-    input: {
+    codigo: {
         backgroundColor: colores.tarjeta,
-        color: colores.texto,
-        padding: 14,
-        borderWidth: 1,
+        borderWidth: 1.5,
         borderColor: colores.bordes,
-        borderRadius: 10,
-        marginBottom: 14,
+        borderRadius: 16,
+        paddingVertical: 16,
         textAlign: 'center',
-        fontSize: 24,
-    },
-    boton: {
-        backgroundColor: colores.acento,
-        padding: 15,
-        borderRadius: 10,
-        alignItems: 'center',
-        marginTop: 8,
-        marginBottom: 16,
-    },
-    textoBoton: {
+        fontSize: 30,
+        fontWeight: '800',
+        letterSpacing: 8,
         color: colores.texto,
-        fontSize: 16,
-        fontWeight: 'bold',
+        marginBottom: 12,
     },
     error: {
         color: colores.gasto,
         textAlign: 'center',
-        marginBottom: 8,
+        marginTop: 4,
     },
 });

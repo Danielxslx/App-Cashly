@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -18,7 +19,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { peticion } from '../../api';
 import FilaDeslizable from '../../FilaDeslizable';
 import FilaTransaccion from '../../FilaTransaccion';
-import { colores } from '../../tema';
+import { categorias, colores } from '../../tema';
 
 const CATEGORIAS = ['Comida', 'Transporte', 'Ocio', 'Compras', 'Salud', 'Otros'];
 
@@ -111,12 +112,12 @@ export default function Transacciones() {
 
     const guardarEdicion = async () => {
         const valor = Number(monto);
-        if (comercio.trim() === '') {
-            setErrorEdicion('Escribe el nombre del comercio');
-            return;
-        }
         if (!valor || valor <= 0) {
             setErrorEdicion('El monto debe ser mayor a 0');
+            return;
+        }
+        if (comercio.trim() === '') {
+            setErrorEdicion('Escribe el nombre del comercio');
             return;
         }
         setErrorEdicion('');
@@ -179,88 +180,120 @@ export default function Transacciones() {
         <GestureHandlerRootView style={styles.contenedor}>
             <ScrollView
                 keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl
                         refreshing={refrescando}
                         onRefresh={refrescar}
-                        tintColor={colores.texto}
+                        tintColor={colores.texto2}
                     />
                 }
             >
                 <View style={styles.cabecera}>
                     <Text style={styles.titulo}>Movimientos</Text>
                     <Text style={styles.ayuda}>
-                        Toca un gasto para editarlo · Deslízalo a la izquierda para eliminarlo
+                        Toca para editar · Desliza a la izquierda para borrar
                     </Text>
                 </View>
 
-                <View style={styles.zonaBusqueda}>
+                <View style={styles.buscador}>
+                    <Ionicons name="search-outline" size={20} color={colores.placeholder} />
                     <TextInput
-                        style={styles.buscador}
-                        placeholder="🔍  Buscar por comercio o categoría"
-                        placeholderTextColor="#9CA3AF"
+                        style={styles.buscadorInput}
+                        placeholder="Buscar comercio o categoría"
+                        placeholderTextColor={colores.placeholder}
                         value={busqueda}
                         onChangeText={setBusqueda}
                         autoCorrect={false}
                         returnKeyType="search"
                     />
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        keyboardShouldPersistTaps="handled"
-                        contentContainerStyle={styles.filaChips}
-                    >
-                        <Pressable
-                            style={[styles.chipFiltro, filtroCategoria === '' && styles.opcionActiva]}
-                            onPress={() => setFiltroCategoria('')}
-                        >
-                            <Text style={styles.textoTipo}>Todas</Text>
+                    {busqueda !== '' ? (
+                        <Pressable onPress={() => setBusqueda('')}>
+                            <Ionicons name="close-circle" size={18} color={colores.placeholder} />
                         </Pressable>
-                        {CATEGORIAS.map((c) => (
-                            <Pressable
-                                key={c}
-                                style={[styles.chipFiltro, filtroCategoria === c && styles.opcionActiva]}
-                                onPress={() => setFiltroCategoria(filtroCategoria === c ? '' : c)}
-                            >
-                                <Text style={styles.textoTipo}>{c}</Text>
-                            </Pressable>
-                        ))}
-                    </ScrollView>
-                    {hayFiltro && !cargando ? (
-                        <View style={styles.resumenFiltro}>
-                            <Text style={styles.textoResumen}>
-                                {filtradas.length} {filtradas.length === 1 ? 'resultado' : 'resultados'}
-                            </Text>
-                            <Pressable onPress={limpiarFiltros}>
-                                <Text style={styles.limpiar}>Limpiar filtros</Text>
-                            </Pressable>
-                        </View>
                     ) : null}
                 </View>
+
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={styles.filaChips}
+                >
+                    <Pressable
+                        style={[styles.chipFiltro, filtroCategoria === '' && styles.chipActivo]}
+                        onPress={() => setFiltroCategoria('')}
+                    >
+                        <Text style={[styles.chipTexto, filtroCategoria === '' && styles.chipTextoActivo]}>
+                            Todas
+                        </Text>
+                    </Pressable>
+                    {CATEGORIAS.map((c) => (
+                        <Pressable
+                            key={c}
+                            style={[styles.chipFiltro, filtroCategoria === c && styles.chipActivo]}
+                            onPress={() => setFiltroCategoria(filtroCategoria === c ? '' : c)}
+                        >
+                            <Text
+                                style={[styles.chipTexto, filtroCategoria === c && styles.chipTextoActivo]}
+                            >
+                                {c}
+                            </Text>
+                        </Pressable>
+                    ))}
+                </ScrollView>
+
+                {hayFiltro && !cargando ? (
+                    <View style={styles.resumenFiltro}>
+                        <Text style={styles.textoResumen}>
+                            {filtradas.length} {filtradas.length === 1 ? 'resultado' : 'resultados'}
+                        </Text>
+                        <Pressable onPress={limpiarFiltros}>
+                            <Text style={styles.limpiar}>Limpiar filtros</Text>
+                        </Pressable>
+                    </View>
+                ) : null}
 
                 {errorConexion ? <Text style={styles.error}>{errorConexion}</Text> : null}
 
                 {cargando ? (
-                    <ActivityIndicator color={colores.acento2} style={styles.cargando} />
+                    <ActivityIndicator color={colores.acento} style={styles.cargando} />
                 ) : grupos.length === 0 ? (
-                    <Text style={styles.vacio}>
-                        {hayFiltro
-                            ? 'No encontramos gastos con ese filtro.'
-                            : 'Aún no tienes movimientos.'}
-                    </Text>
+                    <View style={styles.vacioCaja}>
+                        <Ionicons name="receipt-outline" size={44} color="#C5CAD6" />
+                        <Text style={styles.vacio}>
+                            {hayFiltro
+                                ? 'No encontramos gastos con ese filtro.'
+                                : 'Aún no tienes movimientos.'}
+                        </Text>
+                    </View>
                 ) : (
-                    grupos.map((g) => (
-                        <View key={g.dia}>
-                            <Text style={styles.dia}>{g.dia}</Text>
-                            <View style={styles.tarjeta}>
-                                {g.items.map((t) => (
-                                    <FilaDeslizable key={t.id} onBorrar={() => confirmarEliminar(t.id)}>
-                                        <FilaTransaccion t={t} onPress={() => abrirEdicion(t)} />
-                                    </FilaDeslizable>
-                                ))}
+                    grupos.map((g) => {
+                        const totalDia = g.items
+                            .filter((t) => t.status === 'approved')
+                            .reduce((suma, t) => suma + t.amount, 0);
+                        return (
+                            <View key={g.dia}>
+                                <View style={styles.diaFila}>
+                                    <Text style={styles.dia}>{g.dia}</Text>
+                                    <Text style={styles.diaTotal}>
+                                        − $ {totalDia.toLocaleString('es-CO')}
+                                    </Text>
+                                </View>
+                                <View style={styles.tarjeta}>
+                                    {g.items.map((t, i) => (
+                                        <FilaDeslizable key={t.id} onBorrar={() => confirmarEliminar(t.id)}>
+                                            <FilaTransaccion
+                                                t={t}
+                                                onPress={() => abrirEdicion(t)}
+                                                ultima={i === g.items.length - 1}
+                                            />
+                                        </FilaDeslizable>
+                                    ))}
+                                </View>
                             </View>
-                        </View>
-                    ))
+                        );
+                    })
                 )}
                 <View style={styles.espacio} />
             </ScrollView>
@@ -276,45 +309,68 @@ export default function Transacciones() {
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 >
                     <View style={styles.hoja}>
-                        <Text style={styles.tituloHoja}>Editar gasto</Text>
+                        <View style={styles.asa} />
+                        <ScrollView
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={styles.hojaContenido}
+                        >
+                            <Text style={styles.tituloHoja}>Editar gasto</Text>
 
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Comercio"
-                            placeholderTextColor="#9CA3AF"
-                            value={comercio}
-                            onChangeText={setComercio}
-                        />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Monto"
-                            placeholderTextColor="#9CA3AF"
-                            keyboardType="numeric"
-                            value={monto}
-                            onChangeText={setMonto}
-                        />
+                            <View style={styles.montoFila}>
+                                <Text style={styles.signo}>$</Text>
+                                <TextInput
+                                    style={styles.montoInput}
+                                    placeholder="0"
+                                    placeholderTextColor="#C5CAD6"
+                                    keyboardType="numeric"
+                                    value={monto}
+                                    onChangeText={setMonto}
+                                />
+                            </View>
+                            <Text style={styles.pie}>Monto del gasto</Text>
 
-                        <Text style={styles.etiquetaCat}>Categoría</Text>
-                        <View style={styles.categorias}>
-                            {CATEGORIAS.map((c) => (
-                                <Pressable
-                                    key={c}
-                                    style={[styles.catChip, categoria === c && styles.opcionActiva]}
-                                    onPress={() => setCategoria(categoria === c ? '' : c)}
-                                >
-                                    <Text style={styles.textoTipo}>{c}</Text>
-                                </Pressable>
-                            ))}
-                        </View>
+                            <Text style={styles.etiquetaCampo}>COMERCIO</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Comercio"
+                                placeholderTextColor={colores.placeholder}
+                                value={comercio}
+                                onChangeText={setComercio}
+                            />
 
-                        {errorEdicion ? <Text style={styles.error}>{errorEdicion}</Text> : null}
+                            <Text style={styles.etiquetaCampo}>CATEGORÍA</Text>
+                            <View style={styles.cuadricula}>
+                                {CATEGORIAS.map((c) => {
+                                    const info = categorias[c];
+                                    const activa = categoria === c;
+                                    return (
+                                        <Pressable
+                                            key={c}
+                                            style={[
+                                                styles.celda,
+                                                activa && { borderColor: info.color, backgroundColor: info.fondo },
+                                            ]}
+                                            onPress={() => setCategoria(activa ? '' : c)}
+                                        >
+                                            <View style={[styles.celdaIcono, { backgroundColor: info.fondo }]}>
+                                                <Ionicons name={info.icono as any} size={18} color={info.color} />
+                                            </View>
+                                            <Text style={styles.celdaTexto}>{c}</Text>
+                                        </Pressable>
+                                    );
+                                })}
+                            </View>
 
-                        <Pressable style={styles.boton} onPress={guardarEdicion}>
-                            <Text style={styles.textoBoton}>Guardar cambios</Text>
-                        </Pressable>
-                        <Pressable onPress={cerrarEdicion}>
-                            <Text style={styles.cancelar}>Cancelar</Text>
-                        </Pressable>
+                            {errorEdicion ? <Text style={styles.error}>{errorEdicion}</Text> : null}
+
+                            <Pressable style={styles.boton} onPress={guardarEdicion}>
+                                <Text style={styles.textoBoton}>Guardar cambios</Text>
+                            </Pressable>
+                            <Pressable onPress={cerrarEdicion}>
+                                <Text style={styles.cancelar}>Cancelar</Text>
+                            </Pressable>
+                        </ScrollView>
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
@@ -330,28 +386,36 @@ const styles = StyleSheet.create({
     cabecera: {
         paddingTop: 70,
         paddingHorizontal: 24,
-        paddingBottom: 8,
     },
     titulo: {
-        fontSize: 30,
+        fontSize: 28,
         color: colores.texto,
-        fontWeight: 'bold',
+        fontWeight: '800',
+        letterSpacing: -0.6,
     },
     ayuda: {
         color: colores.texto2,
-        fontSize: 12,
+        fontSize: 13,
         marginTop: 4,
     },
-    zonaBusqueda: {
-        marginTop: 8,
-    },
     buscador: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
         backgroundColor: colores.tarjeta,
-        color: '#FFFFFF',
-        paddingVertical: 12,
+        borderWidth: 1.5,
+        borderColor: colores.bordes,
+        borderRadius: 16,
         paddingHorizontal: 16,
-        borderRadius: 14,
+        paddingVertical: 13,
         marginHorizontal: 20,
+        marginTop: 16,
+    },
+    buscadorInput: {
+        flex: 1,
+        color: colores.texto,
+        fontSize: 15,
+        padding: 0,
     },
     filaChips: {
         paddingHorizontal: 20,
@@ -360,9 +424,23 @@ const styles = StyleSheet.create({
     },
     chipFiltro: {
         paddingVertical: 8,
-        paddingHorizontal: 14,
-        borderRadius: 16,
+        paddingHorizontal: 15,
+        borderRadius: 999,
         backgroundColor: colores.tarjeta,
+        borderWidth: 1.5,
+        borderColor: colores.bordes,
+    },
+    chipActivo: {
+        backgroundColor: colores.texto,
+        borderColor: colores.texto,
+    },
+    chipTexto: {
+        fontSize: 13.5,
+        fontWeight: '700',
+        color: '#4A5369',
+    },
+    chipTextoActivo: {
+        color: '#FFFFFF',
     },
     resumenFiltro: {
         flexDirection: 'row',
@@ -374,18 +452,27 @@ const styles = StyleSheet.create({
         fontSize: 13,
     },
     limpiar: {
-        color: colores.acento2,
+        color: colores.acento,
         fontSize: 13,
-        fontWeight: '600',
+        fontWeight: '700',
+    },
+    diaFila: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginHorizontal: 24,
+        marginTop: 20,
+        marginBottom: 10,
     },
     dia: {
         color: colores.texto2,
-        fontSize: 14,
-        fontWeight: '600',
-        textTransform: 'capitalize',
-        marginHorizontal: 24,
-        marginTop: 20,
-        marginBottom: 8,
+        fontSize: 13,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+    },
+    diaTotal: {
+        color: colores.texto2,
+        fontSize: 13,
+        fontWeight: '700',
     },
     tarjeta: {
         backgroundColor: colores.tarjeta,
@@ -393,14 +480,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         marginHorizontal: 20,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: colores.bordes,
     },
     cargando: {
         marginTop: 40,
     },
+    vacioCaja: {
+        alignItems: 'center',
+        marginTop: 50,
+        gap: 12,
+    },
     vacio: {
         color: colores.texto2,
         textAlign: 'center',
-        marginTop: 40,
     },
     error: {
         color: colores.gasto,
@@ -413,67 +506,128 @@ const styles = StyleSheet.create({
     fondoModal: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.6)',
+        backgroundColor: 'rgba(14,21,37,0.5)',
     },
     hoja: {
         backgroundColor: colores.tarjeta,
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        padding: 24,
-        paddingBottom: 40,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        paddingHorizontal: 22,
+        paddingTop: 12,
+        maxHeight: '92%',
+    },
+    asa: {
+        width: 44,
+        height: 5,
+        borderRadius: 3,
+        backgroundColor: '#D8DBE5',
+        alignSelf: 'center',
+        marginBottom: 16,
+    },
+    hojaContenido: {
+        paddingBottom: 36,
     },
     tituloHoja: {
         fontSize: 22,
         color: colores.texto,
-        fontWeight: 'bold',
-        marginBottom: 16,
+        fontWeight: '800',
+        letterSpacing: -0.5,
+        marginBottom: 10,
     },
-    input: {
-        backgroundColor: '#2A2A3A',
-        color: '#FFFFFF',
-        padding: 14,
-        borderRadius: 12,
-        marginBottom: 12,
+    montoFila: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 4,
     },
-    etiquetaCat: {
+    signo: {
+        fontSize: 26,
+        color: colores.texto2,
+        fontWeight: '700',
+        marginRight: 6,
+    },
+    montoInput: {
+        fontSize: 46,
+        fontWeight: '800',
+        letterSpacing: -1.5,
+        color: colores.texto,
+        minWidth: 90,
+        textAlign: 'center',
+    },
+    pie: {
+        textAlign: 'center',
         color: colores.texto2,
         fontSize: 13,
+        marginBottom: 18,
+    },
+    etiquetaCampo: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: colores.texto2,
+        letterSpacing: 0.4,
         marginBottom: 8,
     },
-    categorias: {
+    input: {
+        backgroundColor: colores.campo,
+        borderWidth: 1.5,
+        borderColor: colores.bordes,
+        color: colores.texto,
+        fontSize: 15,
+        fontWeight: '600',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderRadius: 14,
+        marginBottom: 18,
+    },
+    cuadricula: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 8,
-        marginBottom: 12,
+        justifyContent: 'space-between',
+        rowGap: 10,
+        marginBottom: 20,
     },
-    catChip: {
-        paddingVertical: 8,
-        paddingHorizontal: 14,
+    celda: {
+        width: '31.5%',
+        alignItems: 'center',
+        gap: 6,
+        paddingTop: 12,
+        paddingBottom: 10,
         borderRadius: 16,
-        backgroundColor: colores.fondo,
+        borderWidth: 1.5,
+        borderColor: colores.bordes,
     },
-    opcionActiva: {
-        backgroundColor: colores.acento,
+    celdaIcono: {
+        width: 36,
+        height: 36,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    textoTipo: {
+    celdaTexto: {
+        fontSize: 12.5,
+        fontWeight: '700',
         color: colores.texto,
-        fontWeight: '600',
     },
     boton: {
         backgroundColor: colores.acento,
-        padding: 15,
-        borderRadius: 12,
+        paddingVertical: 17,
+        borderRadius: 16,
         alignItems: 'center',
-        marginTop: 8,
+        shadowColor: colores.acento,
+        shadowOpacity: 0.35,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 6,
     },
     textoBoton: {
-        color: colores.texto,
+        color: '#FFFFFF',
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '800',
     },
     cancelar: {
         color: colores.texto2,
         textAlign: 'center',
         marginTop: 16,
+        fontWeight: '600',
     },
 });

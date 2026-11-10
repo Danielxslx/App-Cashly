@@ -1,20 +1,25 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { API } from '../config';
 import { guardarRefresh, guardarToken, obtenerMfaLogin } from '../sesion';
 import { colores } from '../tema';
+import { Boton, PantallaAuth } from '../ui';
 
 export default function Codigo() {
     const router = useRouter();
     const [codigo, setCodigo] = useState('');
     const [error, setError] = useState('');
+    const [enviando, setEnviando] = useState(false);
 
     const verificar = async () => {
+        setError('');
         if (codigo.replace(/\s/g, '').length !== 6) {
             setError('El código debe tener 6 dígitos');
             return;
         }
+        setEnviando(true);
         try {
             const respuesta = await fetch(`${API}/auth/login/mfa`, {
                 method: 'POST',
@@ -38,85 +43,94 @@ export default function Codigo() {
             }
         } catch {
             setError('No se pudo conectar con el servidor');
+        } finally {
+            setEnviando(false);
         }
     };
 
     return (
-        <View style={styles.contenedor}>
+        <PantallaAuth>
+            <View style={styles.icono}>
+                <Ionicons name="shield-checkmark-outline" size={34} color={colores.acento} />
+            </View>
             <Text style={styles.titulo}>Verificación en dos pasos</Text>
-            <Text style={styles.texto}>
+            <Text style={styles.subtitulo}>
                 Escribe el código de 6 dígitos de tu app Authenticator
             </Text>
+
             <TextInput
-                style={styles.input}
+                style={styles.codigo}
                 placeholder="000000"
-                placeholderTextColor={colores.placeholder}
-                keyboardType="numeric"
+                placeholderTextColor="#C5CAD6"
+                keyboardType="number-pad"
                 maxLength={7}
                 value={codigo}
                 onChangeText={setCodigo}
             />
+
             {error ? <Text style={styles.error}>{error}</Text> : null}
-            <Pressable style={styles.boton} onPress={verificar}>
-                <Text style={styles.textoBoton}>Verificar</Text>
+
+            <View style={{ height: 8 }} />
+            <Boton texto="Verificar" onPress={verificar} cargando={enviando} />
+
+            <Pressable style={styles.volver} onPress={() => router.replace('/')}>
+                <Text style={styles.volverTexto}>Volver al login</Text>
             </Pressable>
-            <Pressable onPress={() => router.replace('/')}>
-                <Text style={styles.enlace}>Volver al login</Text>
-            </Pressable>
-        </View>
+        </PantallaAuth>
     );
 }
 
 const styles = StyleSheet.create({
-    contenedor: {
-        flex: 1,
-        padding: 24,
-        paddingTop: 200,
-        backgroundColor: colores.fondo,
+    icono: {
+        width: 72,
+        height: 72,
+        borderRadius: 24,
+        backgroundColor: '#E8ECFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
+        marginBottom: 20,
     },
     titulo: {
         fontSize: 28,
         color: colores.texto,
+        fontWeight: '800',
+        letterSpacing: -0.7,
         textAlign: 'center',
-        marginBottom: 12,
     },
-    texto: {
+    subtitulo: {
         fontSize: 15,
         color: colores.texto2,
         textAlign: 'center',
-        marginBottom: 32,
-    },
-    input: {
-        backgroundColor: colores.tarjeta,
-        color: colores.texto,
-        padding: 14,
-        borderWidth: 1,
-        borderColor: colores.bordes,
-        borderRadius: 10,
-        marginBottom: 14,
-        textAlign: 'center',
-        fontSize: 24,
-    },
-    boton: {
-        backgroundColor: colores.acento,
-        padding: 15,
-        borderRadius: 10,
-        alignItems: 'center',
         marginTop: 8,
+        marginBottom: 28,
+        lineHeight: 22,
     },
-    textoBoton: {
+    codigo: {
+        backgroundColor: colores.tarjeta,
+        borderWidth: 1.5,
+        borderColor: colores.bordes,
+        borderRadius: 16,
+        paddingVertical: 16,
+        textAlign: 'center',
+        fontSize: 30,
+        fontWeight: '800',
+        letterSpacing: 8,
         color: colores.texto,
-        fontSize: 16,
-        fontWeight: 'bold',
+        marginBottom: 12,
     },
     error: {
         color: colores.gasto,
         textAlign: 'center',
-        marginBottom: 8,
+        marginTop: 4,
     },
-    enlace: {
-        color: colores.acento2,
-        textAlign: 'center',
-        marginTop: 20,
+    volver: {
+        alignItems: 'center',
+        marginTop: 22,
+    },
+    volverTexto: {
+        color: colores.acento,
+        fontWeight: '700',
+        fontSize: 14.5,
     },
 });
