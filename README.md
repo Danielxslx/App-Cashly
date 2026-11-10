@@ -1,56 +1,49 @@
-# Welcome to your Expo app 👋
+# Cashly
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App móvil para llevar el control de gastos personales, hecha con **React Native (Expo) y TypeScript**. Se conecta a una API propia (Node.js + Express + SQLite) con verificación de correo y autenticación en dos pasos.
 
-## Get started
+## Qué hace
 
-1. Install dependencies
+- **Cuenta segura:** registro con verificación de correo (código de 6 dígitos), inicio de sesión con verificación en dos pasos (Microsoft o Google Authenticator) y recuperación de cuenta con clave de recuperación.
+- **Gastos:** registro de gastos con tarjeta o en efectivo, con categoría.
+- **Movimientos:** lista agrupada por día, búsqueda, filtro por categoría, edición y borrado deslizando.
+- **Metas mensuales:** límite por categoría o de gasto total, con barra de progreso y estado (en camino, cerca del límite, excedida).
+- **Reportes:** gasto de los últimos 7 días, resumen por categoría del mes y comparación semanal.
+- **Perfil:** cambio de contraseña y cierre de sesión.
+- **Captura automática (Apple Pay):** un Atajo de iPhone envía cada pago con tarjeta al servidor mediante un token de captura que se genera desde Perfil.
+
+## Tecnologías
+
+- React Native, Expo y Expo Router
+- TypeScript
+- API REST: [API-JDS](https://github.com/SEBASWILL/API-JDS) (Node.js, Express, SQLite)
+
+## Cómo ejecutarla
+
+1. Instala las dependencias:
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. Revisa `src/config.ts`: con `USAR_NUBE = true` usa la API desplegada (`https://api.cashly.lat/v1`); con `false` usa la API local.
+
+3. Inicia el proyecto y abre la app con Expo Go:
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+## Equipo
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+| Integrante | Rol |
+|---|---|
+| Valerie | Requerimientos y frontend (app móvil) |
+| Wilches | Backend (API) |
+| José | Pruebas |
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Siguiente fase
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Registro de ingresos
+- Captura pasiva de gastos y reconocimiento de mensajes con expresiones regulares
+- Funciones de inteligencia artificial
