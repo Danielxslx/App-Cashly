@@ -38,7 +38,7 @@ App móvil para llevar el control de gastos personales, hecha con **React Native
 
 | Integrante | Rol |
 |---|---|
-| Valerie | Requerimientos y frontend (app móvil) |
+| Daniel | Requerimientos y frontend (app móvil) |
 | Wilches | Backend (API) |
 | José | Pruebas |
 
