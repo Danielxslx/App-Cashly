@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "Cashly",
+    "owner": "dagotys-team",
     "slug": "finanzas-rn",
     "version": "1.0.0",
     "orientation": "portrait",
