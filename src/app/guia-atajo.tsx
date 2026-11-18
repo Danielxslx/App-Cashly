@@ -52,14 +52,26 @@ const PASOS: Paso[] = [
         aviso: 'El error más común es olvidar la palabra Bearer o el espacio después.',
     },
     {
-        titulo: 'Agrega el cuerpo',
-        texto: 'Toca «Cuerpo de la solicitud», elige JSON y añade 4 campos de tipo Texto. En cada valor elige la variable de «Entrada del atajo».',
+        titulo: 'Abre el cuerpo',
+        texto: 'Baja un poco y toca «Cuerpo de la solicitud». Elige «JSON». Ahí vas a añadir 3 campos, uno por uno.',
+    },
+    {
+        titulo: 'Añade el primer campo',
+        texto: 'Toca «Añadir nuevo campo» y elige «Texto». A la izquierda escribe el nombre del campo. A la derecha toca el valor y elige la variable «Entrada del atajo»; luego elige «Comercio».',
         datos: [
-            { etiqueta: 'merchant', valor: 'Comercio' },
-            { etiqueta: 'amount', valor: 'Importe' },
-            { etiqueta: 'card', valor: 'Tarjeta' },
-            { etiqueta: 'date', valor: 'Fecha actual' },
+            { etiqueta: 'Nombre (izquierda)', valor: 'merchant' },
+            { etiqueta: 'Valor (derecha)', valor: 'Entrada del atajo → Comercio' },
         ],
+        aviso: 'El nombre debe quedar exactamente así: en minúsculas y sin espacios.',
+    },
+    {
+        titulo: 'Repite con los otros dos',
+        texto: 'Añade dos campos más del mismo modo: «Añadir nuevo campo», «Texto», el nombre a la izquierda y la variable a la derecha.',
+        datos: [
+            { etiqueta: 'amount', valor: 'Entrada del atajo → Importe' },
+            { etiqueta: 'card', valor: 'Entrada del atajo → Tarjeta' },
+        ],
+        aviso: 'No necesitas poner la fecha: Cashly usa la hora del pago.',
     },
     {
         titulo: 'Que corra solo',
