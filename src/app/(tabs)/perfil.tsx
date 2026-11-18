@@ -269,6 +269,11 @@ export default function Perfil() {
                                 </>
                             )}
                         </Pressable>
+                        <Pressable style={s.guiaEnlace} onPress={() => router.push('/guia-atajo' as any)}>                            <Ionicons name="help-circle-outline" size={18} color={colores.acento} />
+                            <Ionicons name="help-circle-outline" size={18} color={colores.acento} />
+                            <Text style={s.guiaEnlaceTexto}>¿Cómo lo configuro? Ver guía paso a paso</Text>
+                        </Pressable>
+
                     </View>
                 </View>
 
@@ -520,4 +525,6 @@ const s = StyleSheet.create({
         marginBottom: 20,
     },
     compartirTexto: { color: colores.acento, fontWeight: '700', fontSize: 14 },
+    guiaEnlace: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 14 },
+    guiaEnlaceTexto: { color: colores.acento, fontWeight: '700', fontSize: 13.5 },
 });

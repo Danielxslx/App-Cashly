@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -10,12 +11,12 @@ type Paso = { titulo: string; texto: string; datos?: Dato[]; aviso?: string };
 const PASOS: Paso[] = [
     {
         titulo: 'Genera tu token',
-        texto: 'En Perfil, toca el botón para generar un token de captura y ponle un nombre que reconozcas, por ejemplo «Mi iPhone».',
+        texto: 'En Perfil, dentro de «Captura automática», toca «Generar token para el Atajo».',
     },
     {
         titulo: 'Copia tu token',
-        texto: 'El token aparece una sola vez. Mantén el dedo sobre él y elige «Copiar». Empieza por it_',
-        aviso: 'Si lo pierdes, revoca ese token en Perfil y genera uno nuevo.',
+        texto: 'Aparece una ventana «Tu token del Atajo». Toca «Copiar o compartir» (o mantén presionado el token) y cópialo. Empieza por it_',
+        aviso: 'Solo se muestra una vez. Si lo pierdes, toca la papelera junto al token en Perfil y genera uno nuevo.',
     },
     {
         titulo: 'Abre la app Atajos',
@@ -67,7 +68,7 @@ const PASOS: Paso[] = [
     {
         titulo: '¡Pruébalo!',
         texto: 'Paga con Apple Pay en un comercio. Vuelve a Cashly y desliza hacia abajo para actualizar: tu gasto aparece solo.',
-        aviso: 'Por ahora el gasto llega sin categoría. Tócalo para editarla.',
+        aviso: 'Para comprobarlo, mira en Perfil: tu token dirá «usado» con la fecha en lugar de «sin usar». El gasto llega sin categoría; tócalo para editarla.',
     },
 ];
 
@@ -81,10 +82,35 @@ export default function GuiaAtajo() {
         <View style={s.raiz}>
             <Stack.Screen options={{ headerShown: false }} />
 
+            <View style={s.progreso}>
+                {PASOS.map((_, n) => (
+                    <View key={n} style={[s.segmento, n <= i && s.segmentoListo]} />
+                ))}
+            </View>
+
             <ScrollView contentContainerStyle={s.contenido}>
                 <Text style={s.numero}>Paso {i + 1} de {PASOS.length}</Text>
                 <Text style={s.titulo}>{paso.titulo}</Text>
                 <Text style={s.texto}>{paso.texto}</Text>
+
+                {paso.datos ? (
+                    <View style={s.datos}>
+                        {paso.datos.map((d) => (
+                            <View key={d.etiqueta} style={s.dato}>
+                                <Text style={s.datoEtiqueta}>{d.etiqueta}</Text>
+                                <Text selectable style={s.datoValor}>{d.valor}</Text>
+                            </View>
+                        ))}
+                        <Text style={s.copiar}>Mantén pulsado un valor para copiarlo</Text>
+                    </View>
+                ) : null}
+
+                {paso.aviso ? (
+                    <View style={s.avisoCaja}>
+                        <Ionicons name="information-circle-outline" size={20} color={colores.acento} />
+                        <Text style={s.avisoTexto}>{paso.aviso}</Text>
+                    </View>
+                ) : null}
             </ScrollView>
 
             <View style={s.pie}>
@@ -106,9 +132,36 @@ export default function GuiaAtajo() {
 
 const s = StyleSheet.create({
     raiz: { flex: 1, backgroundColor: colores.fondo },
-    contenido: { padding: 24, paddingTop: 70 },
+    contenido: { padding: 24, paddingTop: 20 },
     numero: { color: colores.acento, fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
     titulo: { color: colores.texto, fontSize: 28, fontWeight: '800', marginTop: 6, marginBottom: 16 },
     texto: { color: colores.texto, fontSize: 18, lineHeight: 27, fontWeight: '500' },
     pie: { flexDirection: 'row', gap: 12, padding: 20, paddingBottom: 34 },
+
+    progreso: { flexDirection: 'row', gap: 5, paddingHorizontal: 24, paddingTop: 64 },
+    segmento: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colores.bordes },
+    segmentoListo: { backgroundColor: colores.acento },
+    datos: {
+        marginTop: 18,
+        backgroundColor: colores.tarjeta,
+        borderWidth: 1.5,
+        borderColor: colores.bordes,
+        borderRadius: 16,
+        padding: 14,
+        gap: 12,
+    },
+    dato: { gap: 2 },
+    datoEtiqueta: { color: colores.texto2, fontSize: 12, fontWeight: '700' },
+    datoValor: { color: colores.texto, fontSize: 15, fontWeight: '700' },
+    copiar: { color: colores.placeholder, fontSize: 12 },
+    avisoCaja: {
+        flexDirection: 'row',
+        gap: 10,
+        alignItems: 'flex-start',
+        marginTop: 16,
+        padding: 14,
+        borderRadius: 14,
+        backgroundColor: colores.tarjeta,
+    },
+    avisoTexto: { flex: 1, color: colores.texto2, fontSize: 14, lineHeight: 20, fontWeight: '600' },
 });
