@@ -12,6 +12,8 @@ import {
     View,
 } from 'react-native';
 import { Cuenta, Estadisticas, eliminarCuenta, obtenerCuentas, obtenerEstadisticas } from '../admin';
+import { API } from '../config';
+import { limpiarSesion, obtenerToken } from '../sesion';
 import { colores } from '../tema';
 
 type Icono = ComponentProps<typeof Ionicons>['name'];
@@ -81,6 +83,18 @@ export default function Admin() {
         cargar();
     };
 
+    const cerrarSesion = async () => {
+        const token = obtenerToken();
+        fetch(`${API}/auth/logout`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => {
+            // sin conexión igual cerramos la sesión en la app
+        });
+        await limpiarSesion();
+        router.replace('/');
+    };
+
     const confirmarEliminar = (c: Cuenta) => {
         Alert.alert(
             'Eliminar cuenta',
@@ -107,12 +121,9 @@ export default function Admin() {
 
     return (
         <View style={s.contenedor}>
-            <Stack.Screen options={{ headerShown: false }} />
+            <Stack.Screen options={{ headerShown: false, gestureEnabled: false }} />
 
             <View style={s.barra}>
-                <Pressable onPress={() => router.back()} hitSlop={12} style={s.atras}>
-                    <Ionicons name="chevron-back" size={24} color={colores.texto} />
-                </Pressable>
                 <View style={{ flex: 1 }}>
                     <Text style={s.titulo}>Panel de administrador</Text>
                     {stats ? (
@@ -122,6 +133,9 @@ export default function Admin() {
                         </Text>
                     ) : null}
                 </View>
+                <Pressable onPress={cerrarSesion} hitSlop={12} style={s.atras}>
+                    <Ionicons name="log-out-outline" size={22} color={colores.gasto} />
+                </Pressable>
             </View>
 
             {cargando ? (
@@ -284,7 +298,7 @@ const s = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
-        paddingHorizontal: 16,
+        paddingHorizontal: 20,
         paddingTop: 60,
         paddingBottom: 12,
     },

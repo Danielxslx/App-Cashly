@@ -1,5 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { esAdmin } from '../../admin';
 import { colores } from '../../tema';
 
 const icono =
@@ -9,6 +12,33 @@ const icono =
     );
 
 export default function TabsLayout() {
+    // Antes de mostrar las pestañas revisamos el rol:
+    // el admin va directo a su panel y nunca ve las pantallas del cliente.
+    const [rol, setRol] = useState<'cargando' | 'admin' | 'cliente'>('cargando');
+
+    useEffect(() => {
+        esAdmin().then((admin) => setRol(admin ? 'admin' : 'cliente'));
+    }, []);
+
+    if (rol === 'cargando') {
+        return (
+            <View
+                style={{
+                    flex: 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: colores.fondo,
+                }}
+            >
+                <ActivityIndicator size="large" color={colores.acento} />
+            </View>
+        );
+    }
+
+    if (rol === 'admin') {
+        return <Redirect href={'/admin' as any} />;
+    }
+
     return (
         <Tabs
             screenOptions={{
