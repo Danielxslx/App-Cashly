@@ -285,7 +285,7 @@ export default function Perfil() {
                     <>
                         <Text style={[s.grupo, { marginTop: 26 }]}>Administración</Text>
                         <View style={s.lista}>
-                            <Pressable style={s.opcion} onPress={() => router.push('/admin' as any)}>
+                            <Pressable style={s.opcion} onPress={() => router.push('/resumen' as any)}>
                                 <View style={[s.opcionIcono, { backgroundColor: '#E7F8EE' }]}>
                                     <Ionicons name="stats-chart" size={20} color={colores.ok} />
                                 </View>

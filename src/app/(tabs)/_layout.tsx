@@ -36,7 +36,7 @@ export default function TabsLayout() {
     }
 
     if (rol === 'admin') {
-        return <Redirect href={'/admin' as any} />;
+       return <Redirect href={'/resumen' as any} />;
     }
 
     return (
