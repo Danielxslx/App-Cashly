@@ -14,6 +14,7 @@ import {
     Text,
     View,
 } from 'react-native';
+import { esAdmin } from '../../admin';
 import { peticion } from '../../api';
 import { API } from '../../config';
 import {
@@ -54,6 +55,9 @@ export default function Perfil() {
     const [errorToken, setErrorToken] = useState('');
     const [tokenNuevo, setTokenNuevo] = useState('');
 
+    // rol de administrador
+    const [admin, setAdmin] = useState(false);
+
     const cargarTokens = async () => {
         try {
             const r = await peticion('/ingest-tokens');
@@ -76,6 +80,7 @@ export default function Perfil() {
             };
             cargarDatos();
             cargarTokens();
+            esAdmin().then(setAdmin);
         }, [])
     );
 
@@ -269,13 +274,30 @@ export default function Perfil() {
                                 </>
                             )}
                         </Pressable>
-                        <Pressable style={s.guiaEnlace} onPress={() => router.push('/guia-atajo' as any)}>                            <Ionicons name="help-circle-outline" size={18} color={colores.acento} />
+                        <Pressable style={s.guiaEnlace} onPress={() => router.push('/guia-atajo' as any)}>
                             <Ionicons name="help-circle-outline" size={18} color={colores.acento} />
                             <Text style={s.guiaEnlaceTexto}>¿Cómo lo configuro? Ver guía paso a paso</Text>
                         </Pressable>
-
                     </View>
                 </View>
+
+                {admin ? (
+                    <>
+                        <Text style={[s.grupo, { marginTop: 26 }]}>Administración</Text>
+                        <View style={s.lista}>
+                            <Pressable style={s.opcion} onPress={() => router.push('/admin' as any)}>
+                                <View style={[s.opcionIcono, { backgroundColor: '#E7F8EE' }]}>
+                                    <Ionicons name="stats-chart" size={20} color={colores.ok} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={s.opcionTexto}>Panel de administrador</Text>
+                                    <Text style={s.capturaDesc}>Usuarios, actividad y cuentas</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color={colores.placeholder} />
+                            </Pressable>
+                        </View>
+                    </>
+                ) : null}
 
                 <Text style={[s.grupo, { marginTop: 26 }]}>Cuenta</Text>
                 <View style={s.lista}>
